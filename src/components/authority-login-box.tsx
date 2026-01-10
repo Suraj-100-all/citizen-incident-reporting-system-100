@@ -55,7 +55,8 @@ export function AuthorityLoginBox() {
           isLoggedIn: true,
           department,
           email,
-          fullName: officer.fullName
+          username: officer.fullName,
+          id: officer.id
         }));
         router.push("/authority/dashboard");
       } else {

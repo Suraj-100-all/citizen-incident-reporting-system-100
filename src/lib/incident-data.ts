@@ -71,7 +71,7 @@ export const incidentCategories: IncidentCategory[] = [
       name: "Admin / Demo",
       nameHindi: "एडमिन / डेमो",
       authority: "Admin Panel",
-      email: "admin@portal.in",
+        email: "suraj100jaiswal100@gmail.com",
       phone: "9999999999",
     },
     {
@@ -96,6 +96,10 @@ export type IncidentReport = {
   status: "pending" | "in-progress" | "resolved";
   createdAt: Date;
   actionTaken?: string;
+  assignedTo?: string;
+  assignedToName?: string;
+  assignedBy?: string;
+  priority?: "low" | "medium" | "high" | "critical";
 };
 
 export type Officer = {
@@ -122,6 +126,10 @@ function mapRowToReport(row: any): IncidentReport {
     status: row.status,
     createdAt: new Date(row.created_at),
     actionTaken: row.action_taken,
+    assignedTo: row.assigned_to,
+    assignedToName: row.assigned_to_name,
+    assignedBy: row.assigned_by,
+    priority: row.priority,
   };
 }
 
@@ -154,7 +162,13 @@ export async function getReports(): Promise<IncidentReport[]> {
     .select('*')
     .order('created_at', { ascending: false });
 
-  if (error) throw error;
+  if (error) {
+    console.error("Supabase error fetching reports:", error);
+    return [];
+  }
+  
+  if (!data || !Array.isArray(data)) return [];
+  
   return data.map(mapRowToReport);
 }
 
@@ -178,7 +192,7 @@ export async function registerOfficer(officer: Omit<Officer, "id" | "createdAt" 
       department_id: officer.departmentId,
       officer_id: officer.officerId,
       proof_url: officer.proofUrl,
-      status: 'pending'
+      status: 'approved' // Set to approved by default for testing as requested
     }])
     .select()
     .single();
@@ -233,4 +247,49 @@ export async function updateReportStatus(
 
   if (error || !data) return null;
   return mapRowToReport(data);
+}
+
+export async function assignReport(
+  reportId: string,
+  officerId: string,
+  officerName: string,
+  assignedBy: string,
+  priority: string
+): Promise<IncidentReport | null> {
+  const { data, error } = await supabase
+    .from('incidents')
+    .update({ 
+      assigned_to: officerId,
+      assigned_to_name: officerName,
+      assigned_by: assignedBy,
+      priority: priority,
+      status: 'in-progress'
+    })
+    .eq('id', reportId)
+    .select()
+    .single();
+
+  if (error || !data) return null;
+  return mapRowToReport(data);
+}
+
+export async function getOfficersByDepartment(departmentId: string): Promise<Officer[]> {
+  const query = supabase.from('officers').select('*').eq('status', 'approved');
+  
+  if (departmentId !== 'all') {
+    query.eq('department_id', departmentId);
+  }
+
+  const { data, error } = await query;
+
+  if (error) return [];
+  return data.map(row => ({
+    id: row.id,
+    fullName: row.full_name,
+    email: row.email,
+    departmentId: row.department_id,
+    officerId: row.officer_id,
+    status: row.status,
+    createdAt: new Date(row.created_at)
+  }));
 }

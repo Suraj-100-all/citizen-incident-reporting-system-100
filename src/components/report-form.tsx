@@ -42,6 +42,7 @@ export function ReportForm({ onSubmit }: ReportFormProps) {
     return new Promise((resolve) => {
       if (!navigator.geolocation) {
         console.warn("Geolocation not supported");
+        alert("आपका ब्राउज़र लोकेशन सपोर्ट नहीं करता है। / Your browser does not support geolocation.");
         resolve(null);
         return;
       }
@@ -55,6 +56,11 @@ export function ReportForm({ onSubmit }: ReportFormProps) {
         },
         (error) => {
           console.error("Geolocation error:", error.code, error.message);
+          let errorMsg = "लोकेशन प्राप्त करने में त्रुटि हुई। / Error getting location.";
+          if (error.code === 1) errorMsg = "कृपया लोकेशन परमिशन दें। / Please grant location permission.";
+          else if (error.code === 3) errorMsg = "लोकेशन रिक्वेस्ट टाइमआउट हो गई। / Location request timed out.";
+          
+          console.warn(errorMsg);
           resolve(null);
         },
         { enableHighAccuracy: true, timeout, maximumAge: 0 }
@@ -63,6 +69,8 @@ export function ReportForm({ onSubmit }: ReportFormProps) {
   };
 
   const fetchAndSetLocation = async (file?: File) => {
+    if (isExtractingLocation) return;
+    
     try {
       setIsExtractingLocation(true);
       
@@ -75,6 +83,7 @@ export function ReportForm({ onSubmit }: ReportFormProps) {
           const exifData = await exifr.gps(file);
           if (exifData && exifData.latitude && exifData.longitude) {
             coords = { latitude: exifData.latitude, longitude: exifData.longitude };
+            console.log("Location obtained from EXIF:", coords);
           }
         } catch (exifError) {
           console.warn("EXIF extraction failed:", exifError);
@@ -84,8 +93,18 @@ export function ReportForm({ onSubmit }: ReportFormProps) {
       if (coords) {
         // Reverse geocoding using Nominatim
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${coords.latitude}&lon=${coords.longitude}&accept-language=hi,en`
+          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${coords.latitude}&lon=${coords.longitude}&accept-language=hi,en`,
+          {
+            headers: {
+              "User-Agent": "CitizenIncidentReportingApp/1.0"
+            }
+          }
         );
+        
+        if (!response.ok) {
+          throw new Error(`Nominatim error: ${response.status}`);
+        }
+
         const result = await response.json();
         
         if (result && result.display_name) {
@@ -95,6 +114,9 @@ export function ReportForm({ onSubmit }: ReportFormProps) {
         }
       } else {
         console.warn("No coordinates found after all attempts");
+        if (!file) {
+          alert("लोकेशन नहीं मिल सकी। कृपया मैन्युअली भरें या फोटो अपलोड करें। / Could not get location. Please enter manually or upload a photo.");
+        }
       }
     } catch (error) {
       console.error("Error getting location:", error);
@@ -126,24 +148,31 @@ export function ReportForm({ onSubmit }: ReportFormProps) {
     }
 
     setIsSubmitting(true);
-    const category = incidentCategories.find((c) => c.id === selectedCategory);
-    if (category) {
-      onSubmit({
-        category,
-        description,
-        location,
-        reporterName,
-        reporterPhone,
-        imageUrl: imagePreview,
-      });
+    try {
+      const category = incidentCategories.find((c) => c.id === selectedCategory);
+      if (category) {
+        await onSubmit({
+          category,
+          description,
+          location,
+          reporterName,
+          reporterPhone,
+          imageUrl: imagePreview,
+        });
+        
+        // Only clear if successful
+        setSelectedCategory("");
+        setDescription("");
+        setLocation("");
+        setReporterName("");
+        setReporterPhone("");
+        setImagePreview(null);
+      }
+    } catch (error) {
+      console.error("Submission error:", error);
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
-    setSelectedCategory("");
-    setDescription("");
-    setLocation("");
-    setReporterName("");
-    setReporterPhone("");
-    setImagePreview(null);
   };
 
   const selectedCategoryData = incidentCategories.find((c) => c.id === selectedCategory);

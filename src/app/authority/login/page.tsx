@@ -48,15 +48,16 @@ export default function AuthorityLoginPage() {
         return;
       }
 
-      if (password === "admin123") {
-        localStorage.setItem("authority_auth", JSON.stringify({
-          isLoggedIn: true,
-          department,
-          email,
-          fullName: officer.fullName
-        }));
-        router.push("/authority/dashboard");
-        } else {
+        if (password === "admin123") {
+          localStorage.setItem("authority_auth", JSON.stringify({
+            isLoggedIn: true,
+            department,
+            email,
+            username: officer.fullName,
+            id: officer.id
+          }));
+          router.push("/authority/dashboard");
+          } else {
           setError("गलत पासवर्ड / Invalid password");
         }
     } catch (err) {

@@ -15,6 +15,7 @@ import {
   type IncidentCategory,
   type IncidentReport,
 } from "@/lib/incident-data";
+import { sendReportNotification } from "@/lib/actions";
 
 export default function Home() {
   const [reports, setReports] = useState<IncidentReport[]>([]);
@@ -32,9 +33,10 @@ export default function Home() {
   const fetchReports = async () => {
     try {
       const data = await getReports();
-      setReports(data);
+      setReports(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching reports:", error);
+      setReports([]);
     } finally {
       setIsLoading(false);
     }
@@ -50,22 +52,43 @@ export default function Home() {
   }) => {
     try {
       const newReport = await addReport(data);
-      await fetchReports();
-      setShowSuccess(newReport.id);
-      setTimeout(() => {
-        setShowSuccess(null);
-        setActiveTab("view");
-      }, 5000);
+      if (newReport && newReport.id) {
+        // Send email notification to authority and admin
+        await sendReportNotification({
+          id: newReport.id,
+          category: { 
+            name: newReport.category.name, 
+            email: newReport.category.email 
+          },
+          description: newReport.description,
+          location: newReport.location,
+          reporterName: newReport.reporterName,
+          reporterPhone: newReport.reporterPhone,
+        });
+
+        await fetchReports();
+        setShowSuccess(newReport.id);
+        setTimeout(() => {
+          setShowSuccess(null);
+          setActiveTab("view");
+        }, 5000);
+      } else {
+        throw new Error("Invalid report response");
+      }
     } catch (error) {
       console.error("Error submitting report:", error);
-      alert("रिपोर्ट भेजने में त्रुटि हुई। कृपया पुन: प्रयास करें।");
+      alert("रिपोर्ट भेजने में त्रुटि हुई। कृपया पुन: प्रयास करें। / Error submitting report. Please try again.");
     }
   };
+
+  const [isTracking, setIsTracking] = useState(false);
 
   const handleTrack = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchId.trim()) return;
     
+    setIsTracking(true);
+    setTrackedReport(null);
     try {
       const report = await getReportById(searchId.trim().toUpperCase());
       setTrackedReport(report || null);
@@ -74,6 +97,9 @@ export default function Home() {
       }
     } catch (error) {
       console.error("Error tracking report:", error);
+      alert("ट्रैकिंग के दौरान एरर हुई। / Error while tracking.");
+    } finally {
+      setIsTracking(false);
     }
   };
 
