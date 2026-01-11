@@ -26,10 +26,11 @@ const nextConfig: NextConfig = {
     experimental: {
       serverActions: {
         allowedOrigins: [
-          "3000-c6c19678-6225-4493-bd9e-271d51cbf09a.proxy.daytona.works",
-          "3000-c6c19678-6225-4493-bd9e-271d51cbf09a.orchids.cloud",
-          "https://3000-c6c19678-6225-4493-bd9e-271d51cbf09a.proxy.daytona.works",
-          "https://3000-c6c19678-6225-4493-bd9e-271d51cbf09a.orchids.cloud"
+          "3000-4840b3e6-8783-4685-8618-cc5e03c2c4a7.proxy.daytona.works",
+          "3000-4840b3e6-8783-4685-8618-cc5e03c2c4a7.orchids.cloud",
+          "https://3000-4840b3e6-8783-4685-8618-cc5e03c2c4a7.proxy.daytona.works",
+          "https://3000-4840b3e6-8783-4685-8618-cc5e03c2c4a7.orchids.cloud",
+          "localhost:3000"
         ]
       }
     },

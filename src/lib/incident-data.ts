@@ -66,14 +66,14 @@ export const incidentCategories: IncidentCategory[] = [
       email: "health.dept@gov.in",
       phone: "102",
     },
-    {
-      id: "admin",
-      name: "Admin / Demo",
-      nameHindi: "एडमिन / डेमो",
-      authority: "Admin Panel",
-        email: "suraj100jaiswal100@gmail.com",
-      phone: "9999999999",
-    },
+        {
+          id: "admin",
+          name: "Admin / Demo",
+          nameHindi: "एडमिन / डेमो",
+          authority: "Admin Panel",
+          email: "suraj100allinone@gmail.com",
+          phone: "8181084451",
+        },
     {
       id: "other",
       name: "Other",
@@ -247,6 +247,19 @@ export async function updateReportStatus(
 
   if (error || !data) return null;
   return mapRowToReport(data);
+}
+
+export async function deleteReport(id: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('incidents')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error("Error deleting report:", error);
+    throw error;
+  }
+  return true;
 }
 
 export async function assignReport(

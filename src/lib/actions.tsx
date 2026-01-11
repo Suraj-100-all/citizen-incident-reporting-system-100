@@ -33,34 +33,37 @@ export async function sendReportNotification(report: {
     return { error: 'Email service not configured' };
   }
 
-  try {
-    const adminEmail = 'suraj100jaiswal100@gmail.com';
-    
-    // Resend free tier (onboarding@resend.dev) can ONLY send to the registered email.
-    // We filter the 'to' list to ensure we don't include unverified addresses which would cause failure.
-    const recipients = new Set<string>();
-    recipients.add(adminEmail);
-    
-    // Only add category email if it's the admin email or if we want to risk it (not recommended on free tier)
-    if (report.category.email === adminEmail) {
-      recipients.add(report.category.email);
-    }
+    try {
+      const adminEmail = 'suraj100jaiswal100@gmail.com';
+      
+      // Attempt to send SMS (Mock)
+      console.log(`[SMS] Sending notification to ${report.reporterPhone}: Your report ${report.id} has been received.`);
+      console.log(`[SMS] Sending notification to Authority (${report.category.name}): New report ${report.id} in ${report.location}.`);
 
-    const { data, error } = await resend.emails.send({
-      from: 'Citizen Alert <onboarding@resend.dev>',
-      to: Array.from(recipients),
-      subject: `New Incident Report: ${report.id} - ${report.category.name}`,
-      react: (
-        <ReportEmailTemplate
-          reportId={report.id}
-          category={report.category.name}
-          description={report.description}
-          location={report.location}
-          reporterName={report.reporterName}
-          reporterPhone={report.reporterPhone}
-        />
-      ),
-    });
+      const recipients = new Set<string>();
+      recipients.add(adminEmail);
+      
+      // Add category email to recipients if it's valid and not already added
+      if (report.category.email && report.category.email.includes('@')) {
+        recipients.add(report.category.email);
+      }
+
+      const { data, error } = await resend.emails.send({
+        from: 'Citizen Alert <onboarding@resend.dev>',
+        to: Array.from(recipients),
+        subject: `New Incident Report: ${report.id} - ${report.category.name}`,
+        react: (
+          <ReportEmailTemplate
+            reportId={report.id}
+            category={report.category.name}
+            description={report.description}
+            location={report.location}
+            reporterName={report.reporterName}
+            reporterPhone={report.reporterPhone}
+          />
+        ),
+      });
+
 
     if (error) {
       console.error('Resend API error:', error);

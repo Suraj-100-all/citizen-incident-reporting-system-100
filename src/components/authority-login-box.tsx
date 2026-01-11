@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Shield, Lock, User, UserPlus } from "lucide-react";
+import { Shield, Lock, User, UserPlus, Info, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -28,13 +28,12 @@ export function AuthorityLoginBox() {
     e.preventDefault();
     setError("");
     if (!department || !email || !password) {
-      setError("सभी जानकारी भरें");
+      setError("कृपया सभी जानकारी भरें");
       return;
     }
 
     setIsLoading(true);
     try {
-      // In this system, we use email for login and check status in officers table
       const officer = await getOfficerByEmail(email);
 
       if (!officer) {
@@ -49,7 +48,6 @@ export function AuthorityLoginBox() {
         return;
       }
 
-      // For demo, we still use password check (real apps use Supabase Auth)
       if (password === "admin123") {
         localStorage.setItem("authority_auth", JSON.stringify({
           isLoggedIn: true,
@@ -60,41 +58,47 @@ export function AuthorityLoginBox() {
         }));
         router.push("/authority/dashboard");
       } else {
-        setError("गलत पासवर्ड");
+        setError("गलत पासवर्ड। कृपया पुनः प्रयास करें।");
       }
     } catch (err) {
       console.error("Login error:", err);
-      setError("लॉगिन में त्रुटि हुई।");
+      setError("लॉगिन में तकनीकी समस्या आई।");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Card className="border-amber-500/30 bg-slate-800/80 backdrop-blur sticky top-24 shadow-2xl">
-      <CardHeader className="pb-4">
-        <div className="flex items-center gap-3">
-          <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-2 rounded-lg">
-            <Shield className="h-5 w-5 text-white" />
+    <Card className="border-0 bg-white shadow-2xl shadow-slate-200/60 rounded-[2.5rem] overflow-hidden">
+      <CardHeader className="p-8 pb-4 bg-[#003366] text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-2xl" />
+        <div className="flex items-center gap-4 relative z-10">
+          <div className="bg-[#ff9933] p-3 rounded-2xl shadow-lg shadow-[#ff9933]/20">
+            <Shield className="h-6 w-6 text-white" />
           </div>
           <div>
-            <CardTitle className="text-xl text-white">अधिकारी लॉगिन</CardTitle>
-            <CardDescription className="text-slate-400 text-xs">Authority Login</CardDescription>
+            <CardTitle className="text-xl font-black uppercase tracking-tight">अधिकारी लॉगिन</CardTitle>
+            <CardDescription className="text-white/60 font-bold text-[10px] uppercase tracking-[0.2em] mt-0.5">
+              Authorized Authority Access
+            </CardDescription>
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div className="space-y-1">
-            <label className="text-xs text-slate-300">विभाग / Department</label>
+      <CardContent className="p-8 space-y-8">
+        <form onSubmit={handleLogin} className="space-y-6">
+          <div className="space-y-3">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+              <div className="w-1 h-1 bg-[#ff9933] rounded-full" />
+              विभाग / Department
+            </label>
             <Select value={department} onValueChange={setDepartment}>
-              <SelectTrigger className="bg-slate-700 border-slate-600 text-white h-9 text-sm">
-                <SelectValue placeholder="विभाग चुनें" />
+              <SelectTrigger className="bg-slate-50 border-slate-200 text-slate-900 h-14 rounded-xl font-black focus:ring-2 focus:ring-[#003366] transition-all">
+                <SelectValue placeholder="विभाग चुनें (Select Dept)" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">सभी विभाग</SelectItem>
+              <SelectContent className="rounded-xl border-slate-200">
+                <SelectItem value="all" className="font-black">सभी विभाग (All Departments)</SelectItem>
                 {incidentCategories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
+                  <SelectItem key={category.id} value={category.id} className="font-bold">
                     {category.authority}
                   </SelectItem>
                 ))}
@@ -102,60 +106,79 @@ export function AuthorityLoginBox() {
             </Select>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-xs text-slate-300">
-              ईमेल / Email
+          <div className="space-y-3">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+              <div className="w-1 h-1 bg-[#ff9933] rounded-full" />
+              ईमेल / Official Email
             </label>
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="officer@gov.in"
-              className="bg-slate-700 border-slate-600 text-white h-9 text-sm"
-            />
+            <div className="relative">
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="officer@gov.in"
+                className="bg-slate-50 border-slate-200 text-slate-900 h-14 pl-12 rounded-xl font-black focus:ring-2 focus:ring-[#003366] transition-all"
+              />
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+            </div>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-xs text-slate-300">
+          <div className="space-y-3">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+              <div className="w-1 h-1 bg-[#ff9933] rounded-full" />
               पासवर्ड / Password
             </label>
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-              className="bg-slate-700 border-slate-600 text-white h-9 text-sm"
-            />
+            <div className="relative">
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="bg-slate-50 border-slate-200 text-slate-900 h-14 pl-12 rounded-xl font-black focus:ring-2 focus:ring-[#003366] transition-all"
+              />
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+            </div>
           </div>
 
           {error && (
-            <p className="text-red-400 text-[10px] text-center font-medium bg-red-900/20 p-1 rounded border border-red-500/30">
-              {error}
-            </p>
+            <div className="bg-red-50 border-l-4 border-red-600 p-4 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+              <Info className="h-5 w-5 text-red-600 shrink-0" />
+              <p className="text-[11px] font-black text-red-700 leading-tight">
+                {error}
+              </p>
+            </div>
           )}
 
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700 h-10 text-sm font-bold shadow-lg shadow-blue-900/20"
+            className="w-full bg-[#003366] hover:bg-[#004d99] h-16 rounded-xl text-lg font-black shadow-2xl shadow-[#003366]/20 transition-all hover:scale-[1.01] active:scale-95"
           >
-            {isLoading ? "लॉगिन हो रहा है..." : "लॉगिन करें"}
+            {isLoading ? (
+              <div className="flex items-center gap-3">
+                <div className="h-5 w-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                लॉगिन हो रहा है...
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                लॉगिन करें (Secure Login)
+                <LogIn className="h-5 w-5" />
+              </div>
+            )}
           </Button>
           
-          <div className="flex flex-col gap-2">
-            <Link href="/authority/register" className="w-full">
+          <div className="pt-8 border-t border-slate-100">
+            <Link href="/authority/register" className="w-full group">
               <Button
                 type="button"
                 variant="outline"
-                className="w-full border-slate-600 text-slate-300 hover:bg-slate-700 h-9 text-xs"
+                className="w-full border-2 border-slate-200 text-slate-500 hover:bg-slate-50 h-14 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] transition-all hover:border-[#003366]/30 hover:text-[#003366]"
               >
-                <UserPlus className="h-3 w-3 mr-2" />
+                <UserPlus className="h-4 w-4 mr-2" />
                 नया पंजीकरण / Register
               </Button>
             </Link>
           </div>
-          
-
         </form>
       </CardContent>
     </Card>
